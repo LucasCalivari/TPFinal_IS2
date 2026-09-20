@@ -1,0 +1,29 @@
+# Python / Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Tool Caches
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# Credentials & Temp AWS Data
+*credentials*.json
+*.pem
+
+# Generated Docs & IDE
+docs/api/
+.vscode/
+.idea/
