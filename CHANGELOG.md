@@ -10,3 +10,4 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Añadido
 - Estructura base de carpetas y archivos de configuración del proyecto (`VERSION`, `BUILD`, `CONTEXT.md`, `REQUIREMENTS.TXT`, `.gitignore`, `pyproject.toml`, `CHANGELOG.md`).
 - Módulos iniciales `src` y `tests`.
+- Configuración de integración continua CI/CD con GitHub Actions en `.github/workflows/ci.yml` (soporte para ramas `main`, `master` y `dev`).

@@ -1,0 +1,46 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "master", "dev" ]
+  pull_request:
+    branches: [ "main", "master", "dev" ]
+
+jobs:
+  lint-and-sec:
+    name: Lint, Format, Type Check & Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r REQUIREMENTS.TXT
+
+      - name: Verificación de calidad y formato con Ruff
+        run: |
+          ruff check .
+
+      - name: Verificación de formateo con Black
+        run: |
+          black --check .
+
+      - name: Verificación de tipos estáticos con MyPy
+        run: |
+          mypy src
+
+      - name: Verificación de tipos estáticos con PyRight
+        run: |
+          pyright src
+
+      - name: Análisis de seguridad con Bandit
+        run: |
+          bandit -r src
