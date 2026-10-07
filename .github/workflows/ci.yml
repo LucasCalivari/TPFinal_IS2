@@ -44,3 +44,27 @@ jobs:
       - name: Análisis de seguridad con Bandit
         run: |
           bandit -r src
+
+      - name: Ejecutar pruebas unitarias con Pytest (Cobertura >= 85%)
+        run: |
+          pytest --cov=. --cov-fail-under=85 tests/
+
+      - name: Generar documentacion tecnica con pdoc
+        run: |
+          mkdir -p docs/api
+          pdoc -o docs/api TPFinal_IS2
+
+  secret-scan:
+    name: Escaneo de secretos con TruffleHog
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código (historial completo)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Búsqueda de secretos filtrados con TruffleHog
+        uses: trufflesecurity/trufflehog@v3.88.0
+        with:
+          extra_args: --results=verified,unknown
