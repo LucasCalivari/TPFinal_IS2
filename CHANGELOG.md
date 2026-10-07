@@ -9,6 +9,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ### Añadido
 - Programa cliente `src/singletonclient.py` (clase `SingletonClient`, patrón Singleton): lee un requerimiento `get`/`set`/`list` desde un JSON (`-i`), lo envía por TCP al servidor (`-s`/`-p`, por defecto `localhost:8080`) y muestra la respuesta por salida estándar o la graba en un archivo (`-o`). Mensajes de debug con `-v` y manejo de errores por argumentos inválidos, datos mínimos faltantes y servidor caído.
+- Módulo `src/corporatedata.py` (clase `CorporateData`, patrón Singleton thread-safe): único punto de acceso a la tabla DynamoDB `CorporateData` con las operaciones `get`, `list` (con paginación) y `set`: actualiza solo los campos informados o crea el registro con los faltantes en blanco. Convierte los `Decimal` de DynamoDB para poder serializarlos en JSON.
+- Módulo `src/corporatelog.py` (clase `CorporateLog`, patrón Singleton thread-safe): único punto de acceso a la tabla DynamoDB `CorporateLog`; registra la pista de auditoría (`id` único, `CPUid`, `sessionid`, `accion`, `idRegistro` y `timestamp`).
 
 ### Cambiado
 - Se reemplazó el ejemplo genérico `src/singleton.py` por `src/singletonclient.py`.
