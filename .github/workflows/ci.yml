@@ -47,7 +47,7 @@ jobs:
 
       - name: Ejecutar pruebas unitarias con Pytest (Cobertura >= 85%)
         run: |
-          pytest --cov=. --cov-fail-under=85 tests/
+          pytest --cov=src --cov-fail-under=85 tests/
 
       - name: Generar documentacion tecnica con pdoc
         run: |
