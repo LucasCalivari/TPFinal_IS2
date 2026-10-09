@@ -23,8 +23,12 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
   - `tests/test_iteratorcorporatedata.py`: patrón Iterator, listado completo, `--id` existente e inexistente, tabla vacía, `--v`, error de AWS y argumentos malformados.
   - `tests/test_singletonclient.py`: patrón Singleton, armado del requerimiento, `get`/`set`/`list` contra un servidor TCP falso, `-o`, `-v`, datos mínimos faltantes, servidor caído, respuesta inválida y argumentos malformados.
 - Dependencia `moto[dynamodb]` en `REQUIREMENTS.TXT` (autorizada por el profesor para los tests unitarios).
+- Módulo `src/observer.py` (patrón Observer) para la gestión de suscripciones del servidor: interfaz `Observer`, observador concreto `SocketObserver` (cliente suscripto por socket TCP, recibe cada notificación como una línea JSON) y `Subject` thread-safe con `attach`, `detach` y `notify` (quita automáticamente a los suscriptos desconectados).
+- `tests/test_observer.py` (13 casos): interfaz abstracta, suscripción sin duplicados, desuscripción, suscripciones concurrentes, notificación a todos, eliminación de suscriptos caídos y envío real por socket.
 
 ### Cambiado
+- Se reemplazó el ejemplo genérico `src/observer.py` por la implementación del Observer del servidor.
+- Los programas se ejecutan como módulos del paquete `src` desde la raíz del proyecto (por ejemplo `python -m src.iteratorCorporateData`), forma de invocación aprobada por el profesor.
 - El paso de Pytest del CI mide la cobertura solo sobre `src` (`--cov=src` en lugar de `--cov=.`), para que los archivos de test no inflen el porcentaje.
 - Se excluye de la medición de cobertura el bloque `if __name__ == "__main__":` (`pyproject.toml`).
 - Se reemplazó el ejemplo genérico `src/singleton.py` por `src/singletonclient.py`.
