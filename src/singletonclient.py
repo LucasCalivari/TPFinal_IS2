@@ -4,7 +4,7 @@ Envía al servidor SingletonProxyObserverTPFI un requerimiento "get", "set" o
 "list" leído desde un archivo JSON y muestra la respuesta recibida.
 
 Uso:
-    python singletonclient.py -i=input.json {-o=output.json} {-s=host} {-p=port} {-v}
+    python -m src.singletonclient -i=input.json {-o=output.json}{-s=host}{-p=port}{-v}
 """
 
 # Módulo para leer los argumentos de la línea de comandos.

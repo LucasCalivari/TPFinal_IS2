@@ -9,6 +9,9 @@ import socket
 # Para probar suscripciones desde varios hilos a la vez.
 import threading
 
+# Para dar tiempo al sistema a detectar un socket cerrado.
+import time
+
 # Tipo genérico para los registros.
 from typing import Any
 
@@ -196,10 +199,12 @@ def test_socketobserver_con_cliente_cerrado_lanza_oserror() -> None:
     with lado_servidor:
         # Observador sobre el lado del servidor.
         observador = SocketObserver(lado_servidor, "U")
-        # Enviar falla con OSError (que notify usa para quitarlo).
+        # Enviar falla con OSError (que notify usa para quitarlo). Los primeros
+        # envíos pueden quedar en el buffer del sistema, por eso se reintenta.
         with pytest.raises(OSError):
-            for _ in range(10):
+            for _ in range(200):
                 observador.update({"id": "A"})
+                time.sleep(0.01)
 
 
 def test_subject_con_socket_real_quita_cliente_cerrado() -> None:
@@ -211,8 +216,10 @@ def test_subject_con_socket_real_quita_cliente_cerrado() -> None:
         # Sujeto con ese suscripto.
         sujeto = Subject()
         sujeto.attach(SocketObserver(lado_servidor, "U"))
-        # Notifica hasta que el envío falle (el primero puede quedar en buffer).
-        for _ in range(10):
-            sujeto.notify({"id": "A"})
+        # Notifica hasta que el envío falle (los primeros pueden quedar en buffer).
+        for _ in range(200):
+            if sujeto.notify({"id": "A"}) == 0:
+                break
+            time.sleep(0.01)
         # El suscripto caído ya no está.
         assert sujeto.cantidad() == 0

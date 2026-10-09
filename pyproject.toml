@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tpfinal-is2"
-version = "1.0.0"
+version = "1.1.0"
 description = "Trabajo Practico Final Integrador - IS2 UADER FCyT"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,9 +33,12 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --cov=src"
+addopts = "-ra -v --cov=src"
 testpaths = [
     "tests",
+]
+markers = [
+    "aceptacion: test de aceptación contra las tablas reales de AWS (no corre en el CI)",
 ]
 
 [tool.coverage.report]

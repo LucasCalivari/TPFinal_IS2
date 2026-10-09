@@ -26,8 +26,16 @@ from src.singletonclient import SingletonClient
 
 
 @pytest.fixture(autouse=True)
-def credenciales_falsas(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Usa credenciales falsas para que ningún test pueda llegar a AWS real."""
+def credenciales_falsas(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Usa credenciales falsas para que ningún test unitario llegue a AWS real.
+
+    Los tests de aceptación (marca "aceptacion") usan las credenciales reales.
+    """
+    # Los tests de aceptación acceden a AWS real: no se tocan las credenciales.
+    if request.node.get_closest_marker("aceptacion"):
+        return
     # Credenciales inválidas: si algo escapara de moto, AWS lo rechazaría.
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
     # Clave secreta falsa.

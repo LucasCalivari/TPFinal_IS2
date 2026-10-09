@@ -7,6 +7,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Sin publicar]
 
+## [1.1.0] - 2026-10-09
+
+Build 2. Implementación completa de los programas y patrones requeridos por el enunciado.
+
 ### Añadido
 - Estructura base de carpetas y archivos de configuración del proyecto (`VERSION`, `BUILD`, `CONTEXT.md`, `REQUIREMENTS.TXT`, `.gitignore`, `pyproject.toml`, `CHANGELOG.md`).
 - Módulos iniciales `src` y `tests`.
@@ -25,9 +29,24 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Dependencia `moto[dynamodb]` en `REQUIREMENTS.TXT` (autorizada por el profesor para los tests unitarios).
 - Módulo `src/observer.py` (patrón Observer) para la gestión de suscripciones del servidor: interfaz `Observer`, observador concreto `SocketObserver` (cliente suscripto por socket TCP, recibe cada notificación como una línea JSON) y `Subject` thread-safe con `attach`, `detach` y `notify` (quita automáticamente a los suscriptos desconectados).
 - `tests/test_observer.py` (13 casos): interfaz abstracta, suscripción sin duplicados, desuscripción, suscripciones concurrentes, notificación a todos, eliminación de suscriptos caídos y envío real por socket.
+- Módulo `src/proxy.py` (clase `CorporateDataProxy`, patrón Proxy) para la gestión de las peticiones del servidor: se interpone delante del Singleton `CorporateData` (recurso real) y, por cada petición, valida los datos mínimos (`UUID`, `ACTION` y, para `get`/`set`, `ID`), la audita en `CorporateLog`, accede a los datos y, en cada `set`, notifica el registro a los suscriptos del Observer. También audita y registra las suscripciones (`suscribir`). Las peticiones inválidas se rechazan sin acceder a las tablas, y las fallas de AWS se devuelven como `{"Error": ...}`.
+- `tests/test_proxy.py` (22 casos): estructura del patrón, camino feliz de `get`/`set`/`list` con su registro en `CorporateLog`, notificación a suscriptos en `set`, filtrado de campos de control, datos mínimos faltantes, acción inválida, fallas de AWS y suscripción.
+- Programa servidor `src/singletonproxyobserver.py` (clase `ServidorTPFI`): acepta conexiones TCP en el puerto `-p` (por defecto `*:8080`, IPv4 e IPv6), atiende a cada cliente en un hilo propio con un id de sesión `uuid4()`, y deriva `get`/`set`/`list` al Proxy. En `subscribe` registra al cliente en el Observer y mantiene la conexión abierta hasta que se desconecta. Responde cada mensaje como una línea JSON. Detecta si ya hay un servidor levantado en el puerto, responde error ante JSON inválido, corta clientes que no envían la petición a tiempo y termina con Ctrl+C. Mensajes de debug con `-v`.
+- `tests/test_singletonproxyobserver.py` (20 casos): caminos felices de `get`/`list`/`subscribe`/`set` con notificación al suscriptor y registro en `CorporateLog`, desconexión de suscriptores, prueba de punta a punta con `SingletonClient`, JSON inválido, datos mínimos faltantes, cliente sin petición, servidor levantado dos veces, puerto inválido, falla de AWS, Ctrl+C y argumentos malformados.
+- Programa cliente `src/observerclient.py` (clase `ObserverClient`): se suscribe al servidor (`-s`/`-p`, por defecto `localhost:8080`) con el UUID de la CPU y la acción `subscribe`, mantiene la conexión abierta y muestra cada notificación (una línea JSON por mensaje) por salida estándar y, si se indica `-o`, la agrega al archivo de salida. Si no puede conectarse o se corta la conexión, reintenta cada 30 segundos (parametrizable con `-r`) y vuelve a suscribirse. Solo termina con Ctrl+C o ante un mensaje inválido del servidor. Las esperas se hacen en tramos de 1 segundo para que Ctrl+C funcione también en Windows. Mensajes de debug con `-v`.
+- `tests/test_observerclient.py` (17 casos): petición de suscripción, recepción de notificaciones de punta a punta con el servidor real, salida por stdout y archivo, reconexión con nueva suscripción, servidor caído con reintentos, conexión cuando el servidor se levanta, mensaje inválido, detención, Ctrl+C y argumentos malformados.
+- Test de aceptación automatizado `tests/test_aceptacion.py` (17 casos) contra las tablas reales de AWS: ejecuta los programas reales como procesos (`python -m src.<programa>`) y verifica en `CorporateData` y `CorporateLog` el camino feliz de `get`, `set`, `list`, `subscribe` e iterator, argumentos malformados en cada programa, peticiones sin datos mínimos, clientes con el servidor caído y el intento de levantar dos veces el servidor. Deja como evidencia la salida de cada programa, los registros de auditoría y el trace del servidor. Usa el registro `lucas` (configurable con `TPFI_ID`) y lo restaura al terminar. Lleva la marca `aceptacion`, que el CI excluye por no tener credenciales de AWS.
+- `README.md` completo, en texto explicativo: descripción, arquitectura, patrones, estructura, requisitos, instalación, uso de los cuatro programas, comunicación cliente-servidor, validación y verificación, CI/CD, documentación, versionado, uso de IA y licencia.
 
 ### Cambiado
+- `CONTEXT.md` actualizado con el registro de los prompts utilizados durante el desarrollo.
+- Los docstrings de `singletonclient.py` e `iteratorCorporateData.py` indican la forma de ejecución con `python -m src.<programa>`.
+- Pytest muestra por defecto cada test con su resultado (`-v` en lugar de `-q` en `pyproject.toml`).
+- El paso de Pytest del CI excluye los tests de aceptación (`-m "not aceptacion"`, marca registrada en `pyproject.toml`), y `tests/conftest.py` no les aplica las credenciales falsas de AWS.
+- El paso de pdoc del CI documenta el paquete `src` (antes apuntaba a `TPFinal_IS2`, que es el nombre del repositorio y no un módulo de Python). La documentación generada se publica como artifact `documentacion-api` de cada corrida exitosa del CI.
+- Los tests del Observer que cierran un socket reintentan el envío hasta detectar la desconexión (en Windows los primeros envíos pueden quedar en el buffer del sistema), para evitar fallos intermitentes.
 - Se reemplazó el ejemplo genérico `src/observer.py` por la implementación del Observer del servidor.
+- Se reemplazó el ejemplo genérico `src/proxy.py` por la implementación del Proxy del servidor.
 - Los programas se ejecutan como módulos del paquete `src` desde la raíz del proyecto (por ejemplo `python -m src.iteratorCorporateData`), forma de invocación aprobada por el profesor.
 - El paso de Pytest del CI mide la cobertura solo sobre `src` (`--cov=src` en lugar de `--cov=.`), para que los archivos de test no inflen el porcentaje.
 - Se excluye de la medición de cobertura el bloque `if __name__ == "__main__":` (`pyproject.toml`).

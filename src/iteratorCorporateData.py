@@ -4,7 +4,7 @@ Lista los registros de la tabla CorporateData recorriéndolos con el patrón
 Iterator y emite el resultado en formato JSON por salida estándar.
 
 Uso:
-    python iteratorCorporateData.py {--id xxxxxxxxx} {--v}
+    python -m src.iteratorCorporateData {--id xxxxxxxxx} {--v}
 """
 
 # Módulo para leer los argumentos de la línea de comandos.
