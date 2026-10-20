@@ -7,6 +7,11 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Sin publicar]
 
+### Añadido
+- Carpeta `ejemplos/` con archivos de entrada para el `SingletonClient`: `get.json`, `set.json` y `list.json` (caminos felices) y `get_sin_id.json` y `accion_invalida.json` (peticiones rechazadas por falta de datos mínimos), y `COMANDOS.txt` con el recordatorio de cómo ejecutar cada programa, los casos de error, los tests y los controles de calidad. Documentada en el `README.md`.
+- Script `ejemplos/ver_log.py` (solo lectura) que muestra los registros de auditoría de `CorporateLog` de una CPU en los últimos minutos, para verificar la actividad de una demo.
+- Ejemplos `ejemplos/set_nuevo.json` y `ejemplos/get_nuevo.json` para mostrar la creación de un registro inexistente (`lucas-nuevo`) con un `set`, y su consulta antes y después.
+
 ## [1.1.0] - 2026-10-09
 
 Build 2. Implementación completa de los programas y patrones requeridos por el enunciado.

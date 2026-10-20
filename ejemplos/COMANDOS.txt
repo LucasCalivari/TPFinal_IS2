@@ -1,0 +1,197 @@
+
+
+Todos los comandos se ejecutan desde la RAÍZ del repositorio (carpeta TPFinal_IS2),
+con el ambiente virtual activado.
+
+
+0. PREPARACIÓN (cada vez que se abre una terminal)
+Activar el ambiente virtual (PowerShell):
+    .\venv\Scripts\Activate.ps1
+
+Si da error de "ejecución de scripts deshabilitada", ejecutar antes:
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+
+1. DEMO COMPLETA (tres terminales abiertas a la vez)
+Terminal 1 - Levantar el servidor (con -v muestra cada paso):
+    python -m src.singletonproxyobserver -v
+
+Terminal 2 - Suscribir un cliente (queda esperando notificaciones):
+    python -m src.observerclient
+
+Terminal 3 - Hacer peticiones con el SingletonClient:
+    python -m src.singletonclient -i=ejemplos/get.json
+    python -m src.singletonclient -i=ejemplos/list.json
+    python -m src.singletonclient -i=ejemplos/set.json
+
+    -> Con el set, la terminal 2 recibe el registro modificado.
+    -> Para que se note el cambio, editar el teléfono en set.json antes.
+
+Para terminar el servidor y el ObserverClient: Ctrl+C en su terminal.
+
+
+2. SINGLETONCLIENT (peticiones get / set / list)
+Traer un registro:
+    python -m src.singletonclient -i=ejemplos/get.json
+
+Listar toda la tabla:
+    python -m src.singletonclient -i=ejemplos/list.json
+
+Modificar un registro (solo cambian los campos que vienen en el archivo):
+    python -m src.singletonclient -i=ejemplos/set.json
+
+Crear un registro nuevo (el ID "lucas-nuevo" no existe en la tabla):
+    python -m src.singletonclient -i=ejemplos/get_nuevo.json
+        -> antes: "no existe el registro id=lucas-nuevo"
+    python -m src.singletonclient -i=ejemplos/set_nuevo.json
+        -> lo crea: los campos informados con su valor y el resto en blanco
+    python -m src.singletonclient -i=ejemplos/get_nuevo.json
+        -> después: devuelve el registro creado
+    ATENCIÓN: el registro queda creado en la tabla compartida (no se borra).
+    Usarlo solo una vez, el día del oral. Una segunda ejecución ya no crea:
+    modifica el registro existente.
+
+Guardar la respuesta en un archivo en vez de mostrarla:
+    python -m src.singletonclient -i=ejemplos/list.json -o=salida.json
+
+Ver los mensajes de debug:
+    python -m src.singletonclient -i=ejemplos/get.json -v
+
+Conectarse a otro host o puerto:
+    python -m src.singletonclient -i=ejemplos/get.json -s=localhost -p=8080
+
+
+3. OBSERVERCLIENT (suscripción)
+-------------------------------
+Suscribirse al servidor local (puerto 8080):
+    python -m src.observerclient
+
+Guardar además cada notificación en un archivo (una línea JSON por mensaje):
+    python -m src.observerclient -o=notificaciones.json
+
+Reintentar cada 5 segundos en vez de 30 si se corta la conexión:
+    python -m src.observerclient -r=5
+
+Con debug:
+    python -m src.observerclient -v
+
+
+4. ITERATOR (listado directo de CorporateData, sin servidor)
+------------------------------------------------------------
+Un solo registro:
+    python -m src.iteratorCorporateData --id lucas
+
+Toda la tabla:
+    python -m src.iteratorCorporateData
+
+Mostrando cada acción:
+    python -m src.iteratorCorporateData --id lucas --v
+
+
+5. ALGUNOS CASOS DE ERROR
+-------------------------------------------
+Petición sin datos mínimos (el cliente no la envía, código de salida 1):
+    python -m src.singletonclient -i=ejemplos/get_sin_id.json
+
+Acción inexistente (el cliente no la envía, código de salida 1):
+    python -m src.singletonclient -i=ejemplos/accion_invalida.json
+
+Registro que no existe (se audita y responde un error):
+    -> Editar get.json con un ID inexistente y ejecutar el get.
+
+Servidor caído (sin levantar el servidor):
+    python -m src.singletonclient -i=ejemplos/get.json
+        -> "Error: servidor no disponible", código de salida 1
+    python -m src.observerclient -r=5
+        -> "Sin conexión con el servidor, reintento en 5.0 s" y sigue reintentando
+
+Levantar dos veces el servidor (con uno ya levantado, en otra terminal):
+    python -m src.singletonproxyobserver
+        -> "¿ya hay un servidor levantado?", código de salida 1
+
+Argumentos malformados (código de salida 2):
+    python -m src.singletonclient
+    python -m src.singletonclient -i=ejemplos/get.json -p=abc
+    python -m src.observerclient -r=0
+    python -m src.singletonproxyobserver -p=abc
+    python -m src.iteratorCorporateData --x
+
+Ver el código de salida del último comando (PowerShell):
+    $LASTEXITCODE
+
+
+VER LA AUDITORÍA EN CORPORATELOG (solo lectura, tarda unos 30 segundos)
+-----------------------------------------------------------------------
+Registros de esta CPU en los últimos 60 minutos:
+    python ejemplos/ver_log.py
+
+Últimos 10 minutos:
+    python ejemplos/ver_log.py --minutos 10
+
+Registros de otra CPU (por ejemplo, los del test de aceptación):
+    python ejemplos/ver_log.py --cpu ACEPTACION-1a2b3c4d --minutos 1440
+
+
+6. TESTS
+--------
+Tests unitarios con cobertura (no tocan AWS):
+    python -m pytest -m "not aceptacion" --cov=src --cov-report=term-missing
+
+Cada archivo de tests unitarios por separado (no tocan AWS):
+
+    Singleton de CorporateData:
+        python -m pytest tests/test_corporatedata.py --no-cov
+
+    Singleton de CorporateLog:
+        python -m pytest tests/test_corporatelog.py --no-cov
+
+    Proxy:
+        python -m pytest tests/test_proxy.py --no-cov
+
+    Observer:
+        python -m pytest tests/test_observer.py --no-cov
+
+    Servidor (SingletonProxyObserver):
+        python -m pytest tests/test_singletonproxyobserver.py --no-cov
+
+    SingletonClient:
+        python -m pytest tests/test_singletonclient.py --no-cov
+
+    ObserverClient:
+        python -m pytest tests/test_observerclient.py --no-cov
+
+    Iterator (iteratorCorporateData):
+        python -m pytest tests/test_iteratorcorporatedata.py --no-cov
+
+Tests de aceptación (escriben en las tablas reales de AWS):
+    $env:TPFI_ID = "lucas"
+    python -m pytest -m aceptacion --no-cov -rA
+
+
+7. CALIDAD DE CÓDIGO Y DOCUMENTACIÓN
+------------------------------------
+    ruff check .
+    black --check .
+    mypy src
+    pyright src
+    bandit -r src
+
+Documentación en el navegador (puerto 8081 para no chocar con el servidor):
+    pdoc src -p 8081
+
+
+8. CI EN VIVO (commit vacío para disparar el workflow de GitHub)
+----------------------------------------------------------------
+Verificar que no haya cambios pendientes (debe decir "working tree clean";
+si hay archivos en verde, entrarían en el commit):
+    git status
+
+Commit vacío (no necesita git add, porque no agrega ningún cambio):
+    git commit --allow-empty -m "Demo: ejecución del CI en vivo"
+
+Subirlo a GitHub (dispara el workflow):
+    git push
+
+Después, en GitHub: pestaña Actions -> la corrida nueva -> al terminar en
+verde, sección Artifacts -> "documentacion-api" (se descarga como .zip y se
+abre index.html). El CI tarda unos minutos: hacer el push al inicio del oral.
