@@ -49,6 +49,9 @@ import pytest
 # Condición de filtro para buscar los registros de auditoría.
 from boto3.dynamodb.conditions import Attr
 
+# Error que lanza boto3 cuando AWS rechaza una operación (por ejemplo, saturación).
+from botocore.exceptions import ClientError
+
 # Todos los tests de este archivo son de aceptación (el CI los excluye).
 pytestmark = pytest.mark.aceptacion
 
@@ -145,20 +148,43 @@ def tabla(nombre: str) -> Any:
     return boto3.resource("dynamodb").Table(nombre)
 
 
+def leer_pagina(filtro: Any, clave: Any) -> Any:
+    """Lee una página de CorporateLog, esperando y reintentando si está saturada.
+
+    La tabla es compartida por el curso y tiene capacidad de lectura limitada.
+    """
+    # Lectura consistente: incluye lo recién grabado por el test.
+    argumentos: dict[str, Any] = {"FilterExpression": filtro, "ConsistentRead": True}
+    # Si no es la primera página, continúa desde la última clave leída.
+    if clave:
+        argumentos["ExclusiveStartKey"] = clave
+    # Intenta hasta 8 veces.
+    for intento in range(1, 9):
+        try:
+            return tabla("CorporateLog").scan(**argumentos)
+        except ClientError as error:
+            # Si no es por exceso de capacidad, es otro problema: se informa.
+            codigo = error.response["Error"]["Code"]
+            if codigo != "ProvisionedThroughputExceededException":
+                raise
+            # Espera cada vez un poco más antes de reintentar.
+            mostrar("CorporateLog saturada", f"reintento {intento} en {5 * intento} s")
+            time.sleep(5 * intento)
+    # Si sigue saturada, el test falla con un mensaje claro.
+    pytest.fail("CorporateLog sigue saturada; volver a ejecutar en unos minutos")
+
+
 def auditorias(cpu: str, desde: str) -> list[dict[str, Any]]:
     """Busca en CorporateLog los registros de esa CPU desde ese momento."""
     # Condición: misma CPU y timestamp posterior al inicio del test.
     filtro = Attr("CPUid").eq(cpu) & Attr("timestamp").gte(desde)
-    # Primera página (lectura consistente: incluye lo recién grabado).
-    respuesta = tabla("CorporateLog").scan(FilterExpression=filtro, ConsistentRead=True)
+    # Primera página.
+    respuesta = leer_pagina(filtro, None)
     registros = list(respuesta.get("Items", []))
-    # Recorre el resto de las páginas.
+    # Recorre el resto de las páginas, con una pausa para no saturar la tabla.
     while "LastEvaluatedKey" in respuesta:
-        respuesta = tabla("CorporateLog").scan(
-            FilterExpression=filtro,
-            ConsistentRead=True,
-            ExclusiveStartKey=respuesta["LastEvaluatedKey"],
-        )
+        time.sleep(0.5)
+        respuesta = leer_pagina(filtro, respuesta["LastEvaluatedKey"])
         registros.extend(respuesta.get("Items", []))
     # Deja la evidencia de lo encontrado.
     mostrar(f"CorporateLog (CPUid={cpu})", json.dumps(registros, indent=2, default=str))

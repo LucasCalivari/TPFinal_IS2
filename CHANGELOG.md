@@ -7,6 +7,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Sin publicar]
 
+### Corregido
+- El test de aceptación ya no falla cuando la tabla compartida `CorporateLog` excede su capacidad de lectura (`ProvisionedThroughputExceededException`): la búsqueda de auditorías hace una pausa entre páginas y, si la tabla está saturada, espera y reintenta hasta 8 veces antes de fallar con un mensaje claro.
+
 ### Añadido
 - Carpeta `ejemplos/` con archivos de entrada para el `SingletonClient`: `get.json`, `set.json` y `list.json` (caminos felices) y `get_sin_id.json` y `accion_invalida.json` (peticiones rechazadas por falta de datos mínimos), y `COMANDOS.txt` con el recordatorio de cómo ejecutar cada programa, los casos de error, los tests y los controles de calidad. Documentada en el `README.md`.
 - Script `ejemplos/ver_log.py` (solo lectura) que muestra los registros de auditoría de `CorporateLog` de una CPU en los últimos minutos, para verificar la actividad de una demo.
