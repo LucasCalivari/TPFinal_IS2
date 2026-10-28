@@ -23,6 +23,10 @@ Terminal 3 - Hacer peticiones con el SingletonClient:
     python -m src.singletonclient -i=ejemplos/get.json
     python -m src.singletonclient -i=ejemplos/list.json
     python -m src.singletonclient -i=ejemplos/set.json
+    python -m src.singletonclient -i=ejemplos/get_sin_id.json
+    python -m src.singletonclient -i=ejemplos/get_nuevo.json
+    python -m src.singletonclient -i=ejemplos/set_nuevo.json
+    python -m src.singletonclient -i=ejemplos/get_nuevo.json
 
     -> Con el set, la terminal 2 recibe el registro modificado.
     -> Para que se note el cambio, editar el teléfono en set.json antes.
