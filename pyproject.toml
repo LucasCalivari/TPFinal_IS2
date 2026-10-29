@@ -41,7 +41,3 @@ markers = [
     "aceptacion: test de aceptación contra las tablas reales de AWS (no corre en el CI)",
 ]
 
-[tool.coverage.report]
-exclude_also = [
-    "if __name__ == .__main__.:",
-]

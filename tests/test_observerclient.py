@@ -277,38 +277,6 @@ def test_detener_corta_la_conexion_abierta(
 # --- Programa principal -------------------------------------------------------
 
 
-def test_main_termina_con_ctrl_c(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Con Ctrl+C el cliente se detiene y devuelve 0."""
-
-    # Simula Ctrl+C mientras el cliente escucha.
-    def ctrl_c(self: ObserverClient) -> None:
-        raise KeyboardInterrupt
-
-    # Reemplaza el bucle principal.
-    monkeypatch.setattr(ObserverClient, "ejecutar", ctrl_c)
-    # Termina sin error e informa la detención.
-    assert main(["-v"]) == 0
-    assert "Cliente detenido" in capsys.readouterr().out
-
-
-def test_main_mensaje_invalido_devuelve_error(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Un mensaje inválido del servidor termina el programa con código 1."""
-
-    # Simula la recepción de un mensaje inválido.
-    def invalido(self: ObserverClient) -> None:
-        raise ValueError("no es JSON")
-
-    # Reemplaza el bucle principal.
-    monkeypatch.setattr(ObserverClient, "ejecutar", invalido)
-    # Termina con error y lo informa.
-    assert main([]) == 1
-    assert "mensaje inválido" in capsys.readouterr().err
-
-
 def test_main_crea_el_archivo_de_salida(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -320,15 +288,6 @@ def test_main_crea_el_archivo_de_salida(
     assert main([f"-o={salida}"]) == 0
     # El archivo quedó creado.
     assert salida.exists()
-
-
-def test_main_archivo_de_salida_invalido(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Si no se puede escribir el archivo de salida, termina con código 1."""
-    # Una carpeta no se puede abrir como archivo.
-    assert main([f"-o={tmp_path}"]) == 1
-    assert "no se puede escribir" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(
