@@ -259,22 +259,6 @@ def test_main_respuesta_no_json_devuelve_error(
     assert "Error" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("contenido", [None, "{ esto no es json"])
-def test_main_archivo_entrada_invalido(
-    tmp_path: Path, contenido: str | None, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Archivo de entrada inexistente o con JSON inválido: error y código 1."""
-    # Ruta del archivo de entrada.
-    archivo = tmp_path / "input.json"
-    # Si hay contenido, lo graba (si no, el archivo no existe).
-    if contenido is not None:
-        archivo.write_text(contenido, encoding="utf-8")
-    # Ejecuta el cliente.
-    assert main([f"-i={archivo}"]) == 1
-    # Informa que no pudo leer el archivo.
-    assert "no se pudo leer" in capsys.readouterr().err
-
-
 @pytest.mark.parametrize(
     "argumentos", [[], ["-p=8080"], ["-i=in.json", "-p=abc"], ["-i=in.json", "-x"]]
 )

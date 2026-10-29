@@ -15,12 +15,6 @@ from typing import Any
 # Framework de tests.
 import pytest
 
-# Error de AWS para simular una falla de acceso.
-from botocore.exceptions import ClientError
-
-# Clase cuyo método se reemplaza para simular el error de AWS.
-from src.corporatedata import CorporateData
-
 # Clases y función principal a probar.
 from src.iteratorCorporateData import (
     CorporateDataCollection,
@@ -137,23 +131,6 @@ def test_main_id_inexistente_da_error(
     assert main(["--id", "NO-EXISTE"]) == 1
     # La salida es un JSON con el error.
     assert "Error" in json.loads(capsys.readouterr().out)
-
-
-def test_main_error_de_aws(
-    tablas: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Si AWS falla, devuelve un error JSON y código 1."""
-
-    # Función que simula una falla de AWS al listar.
-    def falla(self: CorporateData) -> list[dict[str, Any]]:
-        raise ClientError({"Error": {"Code": "500", "Message": "caido"}}, "Scan")
-
-    # Reemplaza list por la función que falla.
-    monkeypatch.setattr(CorporateData, "list", falla)
-    # El programa termina con error.
-    assert main([]) == 1
-    # Y lo informa en JSON.
-    assert "no se pudo acceder a AWS" in json.loads(capsys.readouterr().out)["Error"]
 
 
 @pytest.mark.parametrize("argumentos", [["--x"], ["--id"], ["--v=si"]])

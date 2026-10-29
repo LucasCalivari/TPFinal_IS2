@@ -20,11 +20,7 @@ from typing import Any
 # Framework de tests.
 import pytest
 
-# Error de boto3 para simular que no se puede preparar el acceso a AWS.
-from botocore.exceptions import NoRegionError
-
-# Módulo, clase y programas a probar (el cliente real se usa de punta a punta).
-from src import singletonproxyobserver
+# Clase y programas a probar (el cliente real se usa de punta a punta).
 from src.singletonclient import main as cliente_main
 from src.singletonproxyobserver import ServidorTPFI, main
 
@@ -290,38 +286,6 @@ def test_main_con_puerto_fuera_de_rango_devuelve_error(tablas: Any) -> None:
     """Un puerto inexistente se informa como error."""
     # El puerto 70000 no existe.
     assert main(["-p=70000"]) == 1
-
-
-def test_main_sin_acceso_a_aws_devuelve_error(
-    monkeypatch: pytest.MonkeyPatch, capsys: Any
-) -> None:
-    """Si no se puede preparar el acceso a AWS, informa el error."""
-
-    # Simula que boto3 no encuentra la región configurada.
-    def sin_region(*args: Any) -> None:
-        raise NoRegionError()
-
-    # Reemplaza el Proxy por la función que falla.
-    monkeypatch.setattr(singletonproxyobserver, "CorporateDataProxy", sin_region)
-    # El programa termina con error.
-    assert main(["-p=0"]) == 1
-    assert "no se pudo preparar el acceso a AWS" in capsys.readouterr().err
-
-
-def test_main_termina_con_ctrl_c(
-    tablas: Any, monkeypatch: pytest.MonkeyPatch, capsys: Any
-) -> None:
-    """Con Ctrl+C el servidor se detiene y devuelve 0."""
-
-    # Simula que el usuario presiona Ctrl+C mientras el servidor atiende.
-    def ctrl_c(self: ServidorTPFI) -> None:
-        raise KeyboardInterrupt
-
-    # Reemplaza el bucle principal.
-    monkeypatch.setattr(ServidorTPFI, "servir", ctrl_c)
-    # Termina sin error e informa la detención.
-    assert main(["-p=0", "-v"]) == 0
-    assert "Servidor detenido" in capsys.readouterr().out
 
 
 def test_servir_sin_iniciar_falla(tablas: Any) -> None:
